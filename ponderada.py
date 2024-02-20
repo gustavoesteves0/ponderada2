@@ -83,6 +83,13 @@ def menu():
 head = None
 
 if __name__ == "__main__":
+    available_ports = list_ports.comports()
+    try:
+        port = available_ports[0].device
+        device = pydobot.Dobot(port=port, verbose=True)
+    except:
+        port = available_ports[1].device
+        device = pydobot.Dobot(port=port, verbose=True)
     print("Olá! esta é uma pequena interface gráfica para interagir com o robô")
     head = str(input("\nInicialmente, qual o atuador sendo utilizado?\n"))
     # available_ports = list_ports.comports()
