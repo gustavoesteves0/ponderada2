@@ -1,62 +1,78 @@
+from serial.tools import list_ports
 import inquirer
+import pydobot  
+from yaspin import yaspin
 
-class Robo:
-    def __init__(self):
-        self.posicao = {"x": 0, "y": 0, "z": 0}
-        self.ferramenta_ligada = False
+# Traz o spinner para apresentar uma animação enquanto o robô está se movendo
+spinner = yaspin(text="Processando...", color="blue")
 
-    def home(self):
-        self.posicao = {"x": 0, "y": 0, "z": 0}
-        return "Robô retornou à posição inicial."
+# Listas as portas seriais disponíveis
+available_ports = list_ports.comports()
+porta_escolhida = inquirer.prompt([
+    inquirer.List("porta", message="Escolha a porta serial", choices=[x.device for x in available_ports])
+])["porta"]
+# Cria uma instância do robô
+device = pydobot.Dobot(port=porta_escolhida, verbose=False)
 
-    def ligar_ferramenta(self):
-        self.ferramenta_ligada = True
-        return "Ferramenta ligada."
+device.speed(100, 100)
 
-    def desligar_ferramenta(self):
-        self.ferramenta_ligada = False
-        return "Ferramenta desligada."
+choices = ["home", "mover", "posicao_atual", "sair"]
+coords = device.pose()
+    
 
-    def mover(self, eixo, distancia):
-        if eixo.lower() in ["x", "y", "z"]:
-            self.posicao[eixo.lower()] += distancia
-            return f"Robô movido {distancia} unidades no eixo {eixo}."
-        else:
-            return "Eixo inválido. Use 'x', 'y' ou 'z'."
-
-    def atual(self):
-        return f"Posição atual do robô: {self.posicao}, Ferramenta ligada: {self.ferramenta_ligada}"
-
-
-def execute_comando(robo, comando):
-    if comando == "home":
-        return robo.home()
-    elif comando == "ligar_ferramenta":
-        return robo.ligar_ferramenta()
-    elif comando == "desligar_ferramenta":
-        return robo.desligar_ferramenta()
-    elif comando == "mover":
-        eixo = inquirer.prompt([inquirer.List("eixo", message="Escolha o eixo", choices=["x", "y", "z"])])["eixo"]
-        distancia = inquirer.prompt([inquirer.Text("distancia", message="Digite a distância")])["distancia"]
-        return robo.mover(eixo, int(distancia))
-    elif comando == "atual":
-        return robo.atual()
-    else:
-        return "Comando inválido."
+def execute_comando(comando):
+    match comando:
+        case "home":
+            spinner.start()
+            device.move_to_J(240.53, 0, 150.23, 0, wait=True)
+            spinner.stop()
+            return "Robô retornou à posição inicial."
+        case "ligar_ferramenta":
+                device.suck(True)
+                choices.remove("ligar_ferramenta")
+                choices.insert(1, "desligar_ferramenta")
+                return "Ferramenta ligada."
+        case "desligar_ferramenta":
+                device.suck(False)
+                choices.remove("desligar_ferramenta")
+                choices.insert(1, "ligar_ferramenta")
+                return "Ferramenta desligada."
+        case "mover":
+            distancia_x = inquirer.prompt([inquirer.Text("distancia_x", message="Distância no eixo X")])["distancia_x"]
+            distancia_y = inquirer.prompt([inquirer.Text("distancia_y", message="Distância no eixo Y")])["distancia_y"]
+            distancia_z = inquirer.prompt([inquirer.Text("distancia_z", message="Distância no eixo Z")])["distancia_z"]
+            distancia_r = inquirer.prompt([inquirer.Text("distancia_r", message="Distância de rotação")])["distancia_r"]
+            nova_posicao_x = coords[0] + float(distancia_x)
+            nova_posicao_y = coords[1] + float(distancia_y)
+            nova_posicao_z = coords[2] + float(distancia_z)
+            nova_posicao_r = coords[3] + float(distancia_r)
+            spinner.start()
+            device.move_to_J(nova_posicao_x, nova_posicao_y, nova_posicao_z, nova_posicao_r, wait=True)
+            spinner.stop()
+            return f"Robô movido para a posição {device.pose()}."
+        case "posicao_atual":
+            return f"Posição atual do robô: {device.pose()}"
+        case _:
+            return "Comando inválido."
 
 
 if __name__ == "__main__":
-    robo = Robo()
+    choices.insert(1, "ligar_ferramenta")
 
+    questions = [
+        inquirer.List('action',
+                      message="Escolha a ação",
+                      choices=choices,
+                      ),
+    ]
     while True:
         perguntas = [
-            inquirer.List("comando", message="Escolha um comando", choices=["home", "ligar_ferramenta", "desligar_ferramenta", "mover", "atual", "sair"])
-        ]
-
+        inquirer.List("comando", message="Escolha um comando", choices=choices)
+    ]
         resposta = inquirer.prompt(perguntas)
-
         if resposta["comando"] == "sair":
             break
 
-        resultado = execute_comando(robo, resposta["comando"])
+        resultado = execute_comando(resposta["comando"])
         print(resultado)
+        
