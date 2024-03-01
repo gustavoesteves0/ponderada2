@@ -41,16 +41,16 @@ def execute_comando(comando):
             distancia_x = inquirer.prompt([inquirer.Text("distancia_x", message="Distância no eixo X")])["distancia_x"]
             distancia_y = inquirer.prompt([inquirer.Text("distancia_y", message="Distância no eixo Y")])["distancia_y"]
             distancia_z = inquirer.prompt([inquirer.Text("distancia_z", message="Distância no eixo Z")])["distancia_z"]
-            distancia_r = inquirer.prompt([inquirer.Text("distancia_r", message="Distância de rotação")])["distancia_r"]
-            coords = device.pose()
-            nova_posicao_x = coords[0] + int(distancia_x)
-            nova_posicao_y = coords[1] + int(distancia_y)
-            nova_posicao_z = coords[2] + int(distancia_z)
-            nova_posicao_r = coords[3] + int(distancia_r)
+            
+            nova_posicao_x = coords[0] + float(distancia_x)
+            nova_posicao_y = coords[1] + float(distancia_y)
+            nova_posicao_z = coords[2] + float(distancia_z)
+
             spinner.start()
-            device.move_to_J(nova_posicao_x, nova_posicao_y, nova_posicao_z, nova_posicao_r, wait=True)
+            device.move_to(nova_posicao_x, nova_posicao_y, nova_posicao_z, 0, wait=True)
             spinner.stop()
             return f"Robô movido para a posição {device.pose()}."
+         
         case "posicao_atual":
             return f"Posição atual do robô: {device.pose()}"
         case _:
