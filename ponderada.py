@@ -38,6 +38,7 @@ def execute_comando(comando):
                 choices.insert(1, "ligar_ferramenta")
                 return "Ferramenta desligada."
         case "mover":
+            #código feito com a ajuda do Rizzi
             distancia_x = inquirer.prompt([inquirer.Text("distancia_x", message="Distância no eixo X")])["distancia_x"]
             distancia_y = inquirer.prompt([inquirer.Text("distancia_y", message="Distância no eixo Y")])["distancia_y"]
             distancia_z = inquirer.prompt([inquirer.Text("distancia_z", message="Distância no eixo Z")])["distancia_z"]
